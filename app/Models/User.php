@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\RoleSystem;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relationships\HasMany;
-use Illuminate\Database\Eloquent\Relationships\BelongsToMany;
+
+
 
 class User extends Authenticatable
 {
@@ -29,7 +30,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'gender' => 'string',
-        'roleSystem' => 'string',
+        'roleSystem' => RoleSystem::class,
     ];
 
     // Relationships
