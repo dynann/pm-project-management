@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RoleSystem;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
