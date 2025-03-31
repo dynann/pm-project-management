@@ -1,14 +1,20 @@
 <?php
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
-// Public routes
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Protected routes
+// Protected routes - all require Bearer token authentication
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+    // sser routes
     Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // refresh token route - requires a token with 'refresh' ability
+    Route::post('/refresh-token', [AuthController::class, 'refreshToken'])
+         ->middleware('ability:refresh');
 });
