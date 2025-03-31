@@ -4,46 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        // (validate the field after user enter)
         $request->validate([
-            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
+            'confirm_password' => 'required|string|same:password',
+            'gender' => 'nullable|string|in:male,female,other',
         ]);
 
-        // (table name user and add data to that field name table User)
         $user = User::create([
-            'username' => $request->name, 
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'roleSystem' => 'developer', // Add this line with an appropriate default role
+            'gender' => $request->gender,
+            'roleSystem' => 'user',
         ]);
 
-        // create access token
-        $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(60))->plainTextToken;
-        
-        // create refresh token with longer expiration
-        $refreshToken = $user->createToken('refresh_token', ['refresh'], now()->addDays(30))->plainTextToken;
+        $accessToken = JWTAuth::fromUser($user, ['exp' => now()->addMinutes(15)->timestamp]);
+        $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
-        // return response with both tokens
         return response()->json([
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+            ],
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
-        ], 201)->withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-            'X-Refresh-Token' => $refreshToken
-        ]);
+        ], 201);
     }
 
     public function login(Request $request)
@@ -53,84 +50,85 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+        $credentials = $request->only('email', 'password');
+
+        try {
+            if (!$accessToken = JWTAuth::attempt($credentials, ['exp' => now()->addMinutes(15)->timestamp])) {
+                return response()->json(['message' => 'Invalid credentials'], 401);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Could not create token'], 500);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
-        
-        // tevoke previous tokens for security (optional, you can remove this if you want multiple logins)
-        $user->tokens()->delete();
-        
-        // create access token with shorter expiration
-        $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(60))->plainTextToken;
-        
-        // create refresh token with longer expiration
-        $refreshToken = $user->createToken('refresh_token', ['refresh'], now()->addDays(30))->plainTextToken;
+        $user = auth()->user();
+        $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
-        // return response with both tokens
         return response()->json([
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+            ],
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
-        ])->withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-            'X-Refresh-Token' => $refreshToken
         ]);
     }
 
-    public function refreshToken(Request $request)
+    public function refresh(Request $request)
     {
-        // user is already authenticated with refresh token at this point
-        $user = $request->user();
-        
-        // create new access token
-        $accessToken = $user->createToken('access_token', ['*'], now()->addMinutes(60))->plainTextToken;
-        
-        // create new refresh token
-        $refreshToken = $user->createToken('refresh_token', ['refresh'], now()->addDays(30))->plainTextToken;
-        
-        // revoke the current token (optional)
-        $request->user()->currentAccessToken()->delete();
-    
-        // return new tokens
-        return response()->json([
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'token_type' => 'Bearer',
-        ])->withHeaders([
-            'Authorization' => 'Bearer ' . $accessToken,
-            'X-Refresh-Token' => $refreshToken
-        ]);
+        $refreshToken = $request->bearerToken();
+
+        if (!$refreshToken) {
+            return response()->json(['message' => 'No token provided'], 401);
+        }
+
+        try {
+            $payload = JWTAuth::setToken($refreshToken)->getPayload();
+            if ($payload['type'] !== 'refresh') {
+                return response()->json(['message' => 'Invalid refresh token'], 401);
+            }
+
+            $user = JWTAuth::setToken($refreshToken)->toUser();
+            $newAccessToken = JWTAuth::fromUser($user, ['exp' => now()->addMinutes(15)->timestamp]);
+            $newRefreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
+
+            return response()->json([
+                'access_token' => $newAccessToken,
+                'refresh_token' => $newRefreshToken,
+                'token_type' => 'Bearer',
+            ]);
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Invalid or expired refresh token'], 401);
+        }
     }
 
     public function logout(Request $request)
     {
         try {
-            $request->user()->currentAccessToken()->delete();
-            return response()->json(['message' => 'Successfully logged out']);
-        } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
-            return response()->json(['error' => 'Logout failed'], 500);
+            JWTAuth::invalidate(JWTAuth::getToken());
+            return response()->json(['message' => 'Logged out successfully']);
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Failed to logout'], 500);
         }
     }
 
-    public function user(Request $request)
+    public function getUserInfo(Request $request)
     {
         try {
-            if (!$request->user()) {
-                return response()->json(['error' => 'Unauthorized'], 401);
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(['message' => 'User not found'], 404);
             }
-            
+
             return response()->json([
-                'user' => $request->user()->only(['id', 'username', 'email', 'roleSystem'])
+                'user' => [
+                    'username' => $user->username,
+                    'email' => $user->email,
+                ]
             ]);
-        } catch (\Exception $e) {
-            Log::error('User fetch error: ' . $e->getMessage());
-            return response()->json(['error' => 'Unable to fetch user data'], 500);
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Invalid token'], 401);
         }
     }
 }

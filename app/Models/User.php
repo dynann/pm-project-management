@@ -4,13 +4,11 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relationships\HasMany;
-use Illuminate\Database\Eloquent\Relationships\BelongsToMany;
-use Laravel\Sanctum\HasApiTokens;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, Notifiable;
+    use Notifiable;
 
     protected $fillable = [
         'username',
@@ -18,7 +16,7 @@ class User extends Authenticatable
         'password',
         'profileURL',
         'gender',
-        'roleSystem',
+        'systemRole',
     ];
 
     protected $hidden = [
@@ -26,14 +24,26 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    // Enum casting for gender and roleSystem
     protected $casts = [
         'email_verified_at' => 'datetime',
         'gender' => 'string',
-        'roleSystem' => 'string',
+        'systemRole' => 'string', 
     ];
 
-    // Relationships
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey(); 
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [
+            'role' => $this->systemRole, 
+        ];
+    }
+
+  
     public function ownedProjects()
     {
         return $this->hasMany(Project::class, 'ownerID');
@@ -80,4 +90,3 @@ class User extends Authenticatable
                     ->withPivot('role');
     }
 }
-?>
