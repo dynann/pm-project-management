@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\RoleSystem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,7 +17,7 @@ class Member extends Model
     ];
 
     protected $casts = [
-        'role' => 'string',
+        'role' => RoleSystem::class,
     ];
 
     // Relationships
