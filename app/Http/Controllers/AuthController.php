@@ -106,29 +106,37 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            JWTAuth::invalidate(JWTAuth::getToken());
+
+            $token = $request->bearerToken();
+
+            if (!$token) {
+                return response()->json(['message' => 'No token provided'], 401);
+            }
+
+            JWTAuth::setToken($token)->invalidate();
+
             return response()->json(['message' => 'Logged out successfully']);
         } catch (JWTException $e) {
-            return response()->json(['message' => 'Failed to logout'], 500);
+            return response()->json(['message' => 'Failed to logout: ' . $e->getMessage()], 500);
         }
     }
 
     public function getUserInfo(Request $request)
     {
-        try {
-            $user = JWTAuth::parseToken()->authenticate();
-            if (!$user) {
-                return response()->json(['message' => 'User not found'], 404);
-            }
+        $user = auth()->user();
 
-            return response()->json([
-                'user' => [
-                    'username' => $user->username,
-                    'email' => $user->email,
-                ]
-            ]);
-        } catch (JWTException $e) {
-            return response()->json(['message' => 'Invalid token'], 401);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
         }
+
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'gender' => $user->gender,
+                'roleSystem' => $user->roleSystem,
+            ]
+        ]);
     }
 }
