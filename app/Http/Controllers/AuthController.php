@@ -53,7 +53,7 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         try {
-            if (!$accessToken = JWTAuth::attempt($credentials, ['exp' => now()->addMinutes(15)->timestamp])) {
+            if (!$accessToken = JWTAuth::attempt($credentials, ['exp' => now()->addDays(1)->timestamp])) {
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
         } catch (JWTException $e) {
@@ -90,7 +90,7 @@ class AuthController extends Controller
             }
 
             $user = JWTAuth::setToken($refreshToken)->toUser();
-            $newAccessToken = JWTAuth::fromUser($user, ['exp' => now()->addMinutes(15)->timestamp]);
+            $newAccessToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(1)->timestamp]);
             $newRefreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
             return response()->json([
@@ -135,7 +135,7 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'email' => $user->email,
                 'gender' => $user->gender,
-                'roleSystem' => $user->roleSystem,
+                'systemRole' => $user->roleSystem,
             ]
         ]);
     }
