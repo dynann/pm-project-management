@@ -25,10 +25,10 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'gender' => $request->gender,
-            'roleSystem' => 'user',
+            // 'roleSystem' => 'user',
         ]);
 
-        $accessToken = JWTAuth::fromUser($user, ['exp' => now()->addMinutes(15)->timestamp]);
+        $accessToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(1)->timestamp]);
         $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
         return response()->json([
