@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('profileURL')->nullable();
             $table->string('gender')->nullable();
             $table->enum('systemRole', ['user', 'admin'])->default('user');
-            $table->rememberToken();
+            $table->rememberToken()->nullable();
             $table->timestamps();
         });
         Schema::create('projects', function (Blueprint $table) {
