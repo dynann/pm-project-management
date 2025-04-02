@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use ErrorException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+
+use function Laravel\Prompts\error;
 
 class UserController extends Controller
 {
@@ -15,19 +17,32 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-        ]);
+        try {
+            $request->validate([
+                'username' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:6',
+            ]);
+    
+            $user = User::create([
+                'username' => $request->username,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+            ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+            if(!$user) {
+                return response()->json('error', status: 300 );
+            }
+    
+            return $user;
 
-        return response()->json($user, 201);
+        }  catch (ErrorException $error) {
+
+            return response()->json($error , status: 500);
+
+        }
+
+
     }
 
     public function show(User $user)

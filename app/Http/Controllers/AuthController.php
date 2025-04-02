@@ -7,36 +7,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    protected $userController;
+    public function __construct(UserController $userController)  {
+        $this->userController = $userController;
+    }
     public function register(Request $request)
     {
+        
         $request->validate([
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'confirm_password' => 'required|string|same:password',
-            'gender' => 'nullable|string|in:male,female,other',
         ]);
 
-        $user = User::create([
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'gender' => $request->gender,
-            // 'roleSystem' => 'user',
-        ]);
-
+        $user = $this->userController->store($request);
         $accessToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(1)->timestamp]);
         $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
         return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'email' => $user->email,
-            ],
+            'user' => $user,
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
@@ -49,7 +42,7 @@ class AuthController extends Controller
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
-
+        print_r('password: ',$request->password);
         $credentials = $request->only('email', 'password');
 
         try {
@@ -57,10 +50,10 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
         } catch (JWTException $e) {
-            return response()->json(['message' => 'Could not create token'], 500);
+            return response()->json(['message' => 'Could not create token' ], 500);
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
         $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
         return response()->json([
@@ -123,7 +116,7 @@ class AuthController extends Controller
 
     public function getUserInfo(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
