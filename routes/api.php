@@ -1,29 +1,36 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProjectsController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/refresh', [AuthController::class, 'refresh']);
+// Auth Routes
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/refresh', [AuthController::class, 'refresh']);
+Route::post('/auth/password/email', [AuthController::class, 'sendPasswordResetEmail']);
+Route::post('/auth/password/reset', [AuthController::class, 'resetPassword']);
+Route::post('/auth/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail']);
+Route::post('/auth/email/resend', [AuthController::class, 'resendVerificationEmail']);
+Route::post('/api/reset-password', [AuthController::class, 'resetPassword']);
 
+// Protected Routes (require authentication)
 Route::middleware('auth:api')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user-info', [AuthController::class, 'getUserInfo']); 
-}); 
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/auth/user', [AuthController::class, 'getUserInfo']);
 
-// <?php
+    Route::get('/projects', [ProjectsController::class, 'index']);
+    Route::post('/projects', [ProjectsController::class, 'store']);
+    Route::get('/projects/{id}', [ProjectsController::class, 'show']);
+    Route::put('/projects/{id}', [ProjectsController::class, 'update']);
+    Route::delete('/projects/{id}', [ProjectsController::class, 'destroy']);
+    
+    // Project relationships
+    Route::get('/projects/{id}/issues', [ProjectsController::class, 'getProjectIssues']);
+    Route::get('/projects/{id}/sprints', [ProjectsController::class, 'getProjectSprints']);
+    Route::get('/projects/{id}/members', [ProjectsController::class, 'getProjectMembers']);
+    Route::post('/projects/{id}/members', [ProjectsController::class, 'addProjectMember']);
+    Route::delete('/projects/{id}/members/{userId}', [ProjectsController::class, 'removeProjectMember']);
+    
+});
 
-// use App\Http\Controllers\AuthController;
-// use Illuminate\Support\Facades\Route;
-
-// // Public routes
-// Route::post('/register', [AuthController::class, 'register']);
-// Route::post('/login', [AuthController::class, 'login']);
-// Route::post('/refresh', [AuthController::class, 'refresh']);
-
-// // Protected routes
-// Route::middleware(['auth:api'])->group(function () {
-//     Route::post('/logout', [AuthController::class, 'logout']);
-//     Route::get('/user-info', [AuthController::class, 'getUserInfo']); 
-// });
