@@ -16,6 +16,7 @@ use App\Http\Requests\Api\Auth\PasswordEmailRequest;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cookie;
 
 class AuthController extends Controller
 {
@@ -44,11 +45,39 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json([
+            'suceess' => true,
             'user' => $user,
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'message' => 'Registration successful. Please check your email to verify your account.'
-        ], 201);
+            // 'access_token' => $accessToken,
+            // 'refresh_token' => $refreshToken,
+            'message' => 'Registration successful. Please check your email to verify your account.',
+        ], 200)
+
+        ->withCookie(
+            Cookie::make(
+                'access_token',
+                $accessToken,
+                60,
+                '/',
+                'localhost',
+                true,
+                true,
+                false,
+                'None'
+            )
+        )
+        ->withCookie(
+            Cookie::make(
+                'refresh_token',
+                $refreshToken,
+                60 * 24 * 30,
+                '/',
+                'localhost',
+                true,
+                true,
+                false,
+                'None'
+            )
+        );
     }
 
     public function login(LoginRequest $request)
@@ -87,10 +116,38 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'verified' => true
             ],
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
+            // 'access_token' => $accessToken,
+            // 'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
-        ]);
+        ])
+
+
+            ->withCookie(
+                Cookie::make(
+                    'access_token',
+                    $accessToken,
+                    60,
+                    '/',
+                    'localhost',
+                    true,
+                    true,
+                    false,
+                    'None'
+                )
+            )
+            ->withCookie(
+                Cookie::make(
+                    'refresh_token',
+                    $refreshToken,
+                    60 * 24 * 30,
+                    '/',
+                    'localhost',
+                    true,
+                    true,
+                    false,
+                    'None'
+                )
+            );
     }
 
     public function refresh(Request $request)
@@ -123,21 +180,21 @@ class AuthController extends Controller
         }
     }
 
-        public function logout(Request $request)
-        {
-            try {
-                $token = $request->bearerToken();
-                if (!$token) {
-                    return response()->json(['message' => 'No token provided'], 401);
-                }
-
-                JWTAuth::setToken($token)->invalidate();
-
-                return response()->json(['message' => 'Logged out successfully']);
-            } catch (JWTException $e) {
-                return response()->json(['message' => 'Failed to logout: ' . $e->getMessage()], 500);
+    public function logout(Request $request)
+    {
+        try {
+            $token = $request->bearerToken();
+            if (!$token) {
+                return response()->json(['message' => 'No token provided'], 401);
             }
+
+            JWTAuth::setToken($token)->invalidate();
+
+            return response()->json(['message' => 'Logged out successfully']);
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Failed to logout: ' . $e->getMessage()], 500);
         }
+    }
 
     public function getUserInfo(Request $request)
     {
@@ -190,32 +247,59 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'email' => $user->email,
             ],
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
+            // 'access_token' => $accessToken,
+            // 'refresh_token' => $refreshToken,
             'message' => 'Password reset successfully'
-        ], 200);
+        ], 200)
+
+        ->withCookie(
+            Cookie::make(
+                'access_token',
+                $accessToken,
+                60,
+                '/',
+                'localhost',
+                false,
+                true,
+                false,
+                'None'
+            )
+        )
+        ->withCookie(
+            Cookie::make(
+                'refresh_token',
+                $refreshToken,
+                60 * 24 * 30,
+                '/',
+                'localhost',
+                false,
+                true,
+                false,
+                'None'
+            )
+        );
     }
 
     public function sendPasswordResetEmail(PasswordEmailRequest $request)
     {
         $email = $request->email;
         $password = $request->password;
-    
+
         $user = User::where('email', $email)->first();
-    
+
         // Check if password matches
         if (!$user || !Hash::check($password, $user->password)) {
             return response()->json(['message' => 'Invalid email or password'], 401);
         }
-    
+
         // Generate token and save
         $token = Str::random(60);
         $user->remember_token = $token;
         $user->save();
-    
+
         // Generate URL
         $resetUrl = env('FRONTEND_URL', 'http://localhost:3000') . '/reset-email?token=' . $token . '&email=' . urlencode($email);
-    
+
         try {
             Mail::send('emails.reset_email', [
                 'resetUrl' => $resetUrl,
@@ -224,7 +308,7 @@ class AuthController extends Controller
                 $message->to($user->email);
                 $message->subject('Reset Your email');
             });
-    
+
             return response()->json(['message' => 'Email reset link has been sent to your email']);
         } catch (\Exception $e) {
             Log::error('Failed to send password reset email', [
