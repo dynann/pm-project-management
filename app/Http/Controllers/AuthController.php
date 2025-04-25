@@ -60,7 +60,7 @@ class AuthController extends Controller
                 '/',
                 'localhost',
                 true,
-                true,
+                false,
                 false,
                 'None'
             )
@@ -73,7 +73,7 @@ class AuthController extends Controller
                 '/',
                 'localhost',
                 true,
-                true,
+                false,
                 false,
                 'None'
             )
@@ -95,14 +95,6 @@ class AuthController extends Controller
 
         // check who it login 
         $user = JWTAuth::user();
-
-        // Check if email is verified
-        if (is_null($user->email_verified_at)) {
-            return response()->json([
-                'message' => 'Email not verified. Please verify your email to login.',
-                'verified' => false
-            ], 403);
-        }
 
         $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
@@ -130,7 +122,7 @@ class AuthController extends Controller
                     '/',
                     'localhost',
                     true,
-                    true,
+                    false,
                     false,
                     'None'
                 )
@@ -143,7 +135,7 @@ class AuthController extends Controller
                     '/',
                     'localhost',
                     true,
-                    true,
+                    false,
                     false,
                     'None'
                 )
@@ -260,7 +252,7 @@ class AuthController extends Controller
                 '/',
                 'localhost',
                 false,
-                true,
+                false,
                 false,
                 'None'
             )
@@ -273,7 +265,7 @@ class AuthController extends Controller
                 '/',
                 'localhost',
                 false,
-                true,
+                false,
                 false,
                 'None'
             )
