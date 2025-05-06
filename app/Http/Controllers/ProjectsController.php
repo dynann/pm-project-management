@@ -14,9 +14,6 @@ class ProjectsController extends Controller
     // Basic CRUD operations
     public function index(Request $request)
     {
-        $user = Auth::user();
-
-        // $projects = $user->projects()->select( 'name')->get();
         $projects = Project::select('id', 'name')->get();
 
         return response()->json([
@@ -24,7 +21,7 @@ class ProjectsController extends Controller
             'message' => 'data retrieve successfully!',
             'data' => $projects
         ], 200);
-    }      // GET /api/projects
+    }      
     
     public function store(Request $request)
     {
