@@ -33,6 +33,9 @@ class User extends Authenticatable implements JWTSubject
         'systemRole' => 'string',
     ];
 
+    public function mentions(){
+        return $this->hasMany(Mention::class);
+    }
 
     public function getJWTIdentifier()
     {

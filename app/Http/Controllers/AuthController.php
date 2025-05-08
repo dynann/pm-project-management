@@ -44,6 +44,17 @@ class AuthController extends Controller
 
         $user->save();
 
+        // Define cookie domain based on environment
+        $cookieDomain = config('app.env') === 'production'
+            ? '.yourdomain.com'  // Replace with your actual production domain
+            : 'localhost';
+
+        // Define cookie secure setting based on environment
+        $isSecure = config('app.env') === 'production';
+
+        // Define sameSite attribute based on environment
+        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+
         return response()->json([
             'suceess' => true,
             'user' => $user,
@@ -52,32 +63,32 @@ class AuthController extends Controller
             'message' => 'Registration successful. Please check your email to verify your account.',
         ], 200)
 
-        ->withCookie(
-            Cookie::make(
-                'access_token',
-                $accessToken,
-                60,
-                '/',
-                'localhost',
-                true,
-                false,
-                false,
-                'None'
+            ->withCookie(
+                Cookie::make(
+                    'access_token',
+                    $accessToken,
+                    60,
+                    '/',
+                    $cookieDomain,
+                    $isSecure,
+                    false,
+                    false,
+                    $sameSite
+                )
             )
-        )
-        ->withCookie(
-            Cookie::make(
-                'refresh_token',
-                $refreshToken,
-                60 * 24 * 30,
-                '/',
-                'localhost',
-                true,
-                false,
-                false,
-                'None'
-            )
-        );
+            ->withCookie(
+                Cookie::make(
+                    'refresh_token',
+                    $refreshToken,
+                    60 * 24 * 30,
+                    '/',
+                    $cookieDomain,
+                    $isSecure,
+                    false,
+                    false,
+                    $sameSite
+                )
+            );
     }
 
     public function login(LoginRequest $request)
@@ -99,6 +110,17 @@ class AuthController extends Controller
         $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
         $user->save();
 
+        // Define cookie domain based on environment
+        $cookieDomain = config('app.env') === 'production'
+            ? '.yourdomain.com'  // Replace with your actual production domain
+            : 'localhost';
+
+        // Define cookie secure setting based on environment
+        $isSecure = config('app.env') === 'production';
+
+        // Define sameSite attribute based on environment
+        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -118,11 +140,11 @@ class AuthController extends Controller
                     $accessToken,
                     60,
                     '/',
-                    'localhost',
-                    true,
+                    $cookieDomain,
+                    $isSecure,
                     false,
                     false,
-                    'None'
+                    $sameSite
                 )
             )
             ->withCookie(
@@ -131,11 +153,11 @@ class AuthController extends Controller
                     $refreshToken,
                     60 * 24 * 30,
                     '/',
-                    'localhost',
-                    true,
+                    $cookieDomain,
+                    $isSecure,
                     false,
                     false,
-                    'None'
+                    $sameSite
                 )
             );
     }
@@ -144,52 +166,63 @@ class AuthController extends Controller
     {
         try {
             $refreshToken = $request->cookie('refresh_token');
-    
+
             if (!$refreshToken) {
                 return response()->json(['message' => 'Refresh token not found'], 401);
             }
-    
+
             $user = JWTAuth::setToken($refreshToken)->toUser();
-    
+
             if (!$user) {
                 return response()->json(['message' => 'User not found'], 404);
             }
-    
+
             $newAccessToken = JWTAuth::fromUser($user, ['exp' => now()->addDay()->timestamp]);
             $newRefreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
-    
+
+            // Define cookie domain based on environment
+            $cookieDomain = config('app.env') === 'production'
+                ? '.yourdomain.com'  // Replace with your actual production domain
+                : 'localhost';
+
+            // Define cookie secure setting based on environment
+            $isSecure = config('app.env') === 'production';
+
+            // Define sameSite attribute based on environment
+            $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+
             return response()->json([
                 'success' => true,
                 'message' => 'Tokens refreshed successfully',
                 'token_type' => 'Bearer',
             ])
-            ->withCookie(
-                Cookie::make(
-                    'access_token',
-                    $newAccessToken,
-                    60,
-                    '/',
-                    'localhost',
-                    true,
-                    false,
-                    false,
-                    'None'
+                ->withCookie(
+                    Cookie::make(
+                        'access_token',
+                        $newAccessToken,
+                        60,
+                        '/',
+                        $cookieDomain,
+                        $isSecure,
+                        false,
+                        false,
+                        $sameSite
+                    )
                 )
-            )
-            ->withCookie(
-                Cookie::make(
-                    'refresh_token',
-                    $newRefreshToken,
-                    60 * 24 * 30,
-                    '/',
-                    'localhost',
-                    true,
-                    false,
-                    false,
-                    'None'
-                )
-            );
-    
+                ->withCookie(
+                    Cookie::make(
+                        'refresh_token',
+                        $newRefreshToken,
+                        60 * 24 * 30,
+                        '/',
+                        $cookieDomain,
+                        $isSecure,
+                        false,
+                        false,
+                        $sameSite
+                    )
+                );
+
         } catch (JWTException $e) {
             return response()->json(['message' => 'Invalid or expired refresh token'], 401);
         }
@@ -214,19 +247,19 @@ class AuthController extends Controller
     public function getUserInfo(Request $request)
     {
         $user = Auth::user();
-    
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-    
+
         // Define accessible endpoints by role
         $permission = [
-            'admin' => ['dashboard', 'users', 'projects'], 
-            'user' => ['projects', 'reports', 'tasks'],               
+            'admin' => ['dashboard', 'users', 'projects'],
+            'user' => ['projects', 'reports', 'tasks'],
         ];
-    
+
         $userRole = $user->systemRole;
-    
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -239,7 +272,7 @@ class AuthController extends Controller
             ]
         ]);
     }
-    
+
     public function resetPassword(PasswordResetRequest $request)
     {
         $token = $request->token;
@@ -265,6 +298,17 @@ class AuthController extends Controller
         $user->remember_token = $refreshToken;
         $user->save();
 
+        // Define cookie domain based on environment
+        $cookieDomain = config('app.env') === 'production'
+            ? '.yourdomain.com'  // Replace with your actual production domain
+            : 'localhost';
+
+        // Define cookie secure setting based on environment
+        $isSecure = config('app.env') === 'production';
+
+        // Define sameSite attribute based on environment
+        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -276,83 +320,17 @@ class AuthController extends Controller
             'message' => 'Password reset successfully'
         ], 200)
 
-        ->withCookie(
-            Cookie::make(
-                'access_token',
-                $accessToken,
-                60,
-                '/',
-                'localhost',
-                false,
-                false,
-                false,
-                'None'
-            )
-        )
-        ->withCookie(
-            Cookie::make(
-                'refresh_token',
-                $refreshToken,
-                60 * 24 * 30,
-                '/',
-                'localhost',
-                false,
-                false,
-                false,
-                'None'
-            )
-        );
-    }
-
-    public function redirectToProvider($provider)
-    {
-        return Socialite::driver($provider)->stateless()->redirect()->getTargetUrl();
-    }
-    
-    public function handleProviderCallback(Request $request, $provider)
-    {
-        try {
-            $socialUser = Socialite::driver($provider)->stateless()->user();
-            
-            // Find existing user or create new one
-            $user = User::where('email', $socialUser->getEmail())->first();
-            
-            if (!$user) {
-                // Create new user from social data
-                $user = new User([
-                    'username' => $socialUser->getName() ?? $socialUser->getNickname() ?? explode('@', $socialUser->getEmail())[0],
-                    'email' => $socialUser->getEmail(),
-                    'password' => Hash::make(Str::random(16)), // Random secure password
-                ]);
-                
-                // Set provider info
-                $user->provider = $provider;
-                $user->provider_id = $socialUser->getId();
-                $user->profileURL = $socialUser->getAvatar();
-                $user->email_verified_at = now(); 
-                $user->save();
-            }
-    
-            // Generate tokens consistent with other auth methods
-            $accessToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(1)->timestamp]);
-            $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
-            
-            // Save refresh token if needed
-            $user->save();
-    
-            // Return same response format as other auth methods
-            return redirect()->away('http://localhost:3000/profile')
             ->withCookie(
                 Cookie::make(
                     'access_token',
                     $accessToken,
                     60,
                     '/',
-                    'localhost',
-                    true,
+                    $cookieDomain,
+                    $isSecure,
                     false,
                     false,
-                    'None'
+                    $sameSite
                 )
             )
             ->withCookie(
@@ -361,19 +339,97 @@ class AuthController extends Controller
                     $refreshToken,
                     60 * 24 * 30,
                     '/',
-                    'localhost',
-                    true,
+                    $cookieDomain,
+                    $isSecure,
                     false,
                     false,
-                    'None'
+                    $sameSite
                 )
             );
+    }
+
+    public function redirectToProvider($provider)
+    {
+        return Socialite::driver($provider)->stateless()->redirect()->getTargetUrl();
+    }
+
+    public function handleProviderCallback(Request $request, $provider)
+    {
+        try {
+            $socialUser = Socialite::driver($provider)->stateless()->user();
+
+            // Find existing user or create new one
+            $user = User::where('email', $socialUser->getEmail())->first();
+
+            if (!$user) {
+                // Create new user from social data
+                $user = new User([
+                    'username' => $socialUser->getName() ?? $socialUser->getNickname() ?? explode('@', $socialUser->getEmail())[0],
+                    'email' => $socialUser->getEmail(),
+                    'password' => Hash::make(Str::random(16)), // Random secure password
+                ]);
+
+                // Set provider info
+                $user->provider = $provider;
+                $user->provider_id = $socialUser->getId();
+                $user->profileURL = $socialUser->getAvatar();
+                $user->email_verified_at = now();
+                $user->save();
+            }
+
+            // Generate tokens consistent with other auth methods
+            $accessToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(1)->timestamp]);
+            $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
+
+            // Save refresh token if needed
+            $user->save();
+
+            // Define cookie domain based on environment
+            $cookieDomain = config('app.env') === 'production'
+                ? '.yourdomain.com'  // Replace with your actual production domain
+                : 'localhost';
+
+            // Define cookie secure setting based on environment
+            $isSecure = config('app.env') === 'production';
+
+            // Define sameSite attribute based on environment
+            $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+
+
+            // Return same response format as other auth methods
+            return redirect()->away('http://localhost:3000/profile')
+                ->withCookie(
+                    Cookie::make(
+                        'access_token',
+                        $accessToken,
+                        60,
+                        '/',
+                        $cookieDomain,
+                        $isSecure,
+                        false,
+                        false,
+                        $sameSite
+                    )
+                )
+                ->withCookie(
+                    Cookie::make(
+                        'refresh_token',
+                        $refreshToken,
+                        60 * 24 * 30,
+                        '/',
+                        $cookieDomain,
+                        $isSecure,
+                        false,
+                        false,
+                        $sameSite
+                    )
+                );
         } catch (\Exception $e) {
             Log::error('Social login error', [
                 'provider' => $provider,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return response()->json(['message' => 'Social login failed: ' . $e->getMessage()], 500);
         }
     }

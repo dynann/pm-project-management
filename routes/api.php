@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\SprintsController;
+use App\Http\Controllers\InvitationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\IssueController;
@@ -29,6 +30,9 @@ Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirectToProvi
 Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
 
 
+Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
+
+
 // Protected Routes (require authentication)
 Route::middleware('auth:api')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -48,25 +52,15 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/projects/{id}/members', [ProjectsController::class, 'addProjectMember']);
         Route::delete('/projects/{id}/members/{userId}', [ProjectsController::class, 'removeProjectMember']);
 
-        // notofication and @mention
-        // User search for mentions
-        Route::get('/users/search', [UserController::class, 'search']);
-
-        // Mentions
-        Route::post('/mentions', [MentionController::class, 'store']);
-
-        // Notifications
-        Route::get('/notifications', [NotificationController::class, 'index']);
-        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
-        // routes/api.php - Add this route
-        Route::get('/content/render-mentions', [ContentController::class, 'renderMentions']);
-
         // api dashboard
         Route::get('/dashboard/summary', [DashboardController::class, 'dashboardSummary']);
         Route::get('/dashboard/recent-activity', [DashboardController::class, 'dashboardRecentActivity']);
         Route::get('/dashboard/upcomming-deadlines', [DashboardController::class, 'dashboardUpcomingDeadlines']);
     });
+
+    //notification
+    Route::post('/invitations', [InvitationController::class, 'store']);
+   
 
     // Sprints api 
  
