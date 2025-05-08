@@ -1,6 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\MentionController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\SprintsController;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +43,25 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/projects/{id}/members', [ProjectsController::class, 'getProjectMembers']);
         Route::post('/projects/{id}/members', [ProjectsController::class, 'addProjectMember']);
         Route::delete('/projects/{id}/members/{userId}', [ProjectsController::class, 'removeProjectMember']);
+
+        // notofication and @mention
+        // User search for mentions
+        Route::get('/users/search', [UserController::class, 'search']);
+
+        // Mentions
+        Route::post('/mentions', [MentionController::class, 'store']);
+
+        // Notifications
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+        // routes/api.php - Add this route
+        Route::get('/content/render-mentions', [ContentController::class, 'renderMentions']);
+
+        // api dashboard
+        Route::get('/dashboard/summary', [DashboardController::class, 'dashboardSummary']);
+        Route::get('/dashboard/recent-activity', [DashboardController::class, 'dashboardRecentActivity']);
+        Route::get('/dashboard/upcomming-deadlines', [DashboardController::class, 'dashboardUpcomingDeadlines']);
     });
 
     // Sprints api 
