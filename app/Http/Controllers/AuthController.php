@@ -46,7 +46,7 @@ class AuthController extends Controller
 
         // Define cookie domain based on environment
         $cookieDomain = config('app.env') === 'production'
-            ? '.yourdomain.com'  // Replace with your actual production domain
+            ? 'pm-project-management-frontend-dbuw.vercel.app'  // Replace with your actual production domain
             : 'localhost';
 
         // Define cookie secure setting based on environment
@@ -58,8 +58,6 @@ class AuthController extends Controller
         return response()->json([
             'suceess' => true,
             'user' => $user,
-            // 'access_token' => $accessToken,
-            // 'refresh_token' => $refreshToken,
             'message' => 'Registration successful. Please check your email to verify your account.',
         ], 200)
 
@@ -71,7 +69,7 @@ class AuthController extends Controller
                     '/',
                     $cookieDomain,
                     $isSecure,
-                    false,
+                    false ,
                     false,
                     $sameSite
                 )
@@ -84,7 +82,7 @@ class AuthController extends Controller
                     '/',
                     $cookieDomain,
                     $isSecure,
-                    false,
+                    false ,
                     false,
                     $sameSite
                 )
@@ -182,7 +180,7 @@ class AuthController extends Controller
 
             // Define cookie domain based on environment
             $cookieDomain = config('app.env') === 'production'
-                ? '.yourdomain.com'  // Replace with your actual production domain
+                ? 'pm-project-management-frontend-dbuw.vercel.app'  // Replace with your actual production domain
                 : 'localhost';
 
             // Define cookie secure setting based on environment
@@ -204,7 +202,7 @@ class AuthController extends Controller
                         '/',
                         $cookieDomain,
                         $isSecure,
-                        false,
+                        false ,
                         false,
                         $sameSite
                     )
@@ -217,7 +215,7 @@ class AuthController extends Controller
                         '/',
                         $cookieDomain,
                         $isSecure,
-                        false,
+                        false ,
                         false,
                         $sameSite
                     )
@@ -300,7 +298,7 @@ class AuthController extends Controller
 
         // Define cookie domain based on environment
         $cookieDomain = config('app.env') === 'production'
-            ? '.yourdomain.com'  // Replace with your actual production domain
+            ? 'pm-project-management-frontend-dbuw.vercel.app/'  // Replace with your actual production domain
             : 'localhost';
 
         // Define cookie secure setting based on environment
@@ -328,7 +326,7 @@ class AuthController extends Controller
                     '/',
                     $cookieDomain,
                     $isSecure,
-                    false,
+                    false ,
                     false,
                     $sameSite
                 )
@@ -341,7 +339,7 @@ class AuthController extends Controller
                     '/',
                     $cookieDomain,
                     $isSecure,
-                    false,
+                    false ,
                     false,
                     $sameSite
                 )
@@ -386,7 +384,7 @@ class AuthController extends Controller
 
             // Define cookie domain based on environment
             $cookieDomain = config('app.env') === 'production'
-                ? '.yourdomain.com'  // Replace with your actual production domain
+                ? 'pm-project-management-frontend-dbuw.vercel.app'  // Replace with your actual production domain
                 : 'localhost';
 
             // Define cookie secure setting based on environment
@@ -406,7 +404,7 @@ class AuthController extends Controller
                         '/',
                         $cookieDomain,
                         $isSecure,
-                        false,
+                        false ,
                         false,
                         $sameSite
                     )
@@ -419,7 +417,7 @@ class AuthController extends Controller
                         '/',
                         $cookieDomain,
                         $isSecure,
-                        false,
+                        false ,
                         false,
                         $sameSite
                     )
