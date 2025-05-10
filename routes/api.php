@@ -1,14 +1,12 @@
 <?php
 
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\MentionController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\ContentController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectsController;
 use App\Http\Controllers\SprintsController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Auth Routes
@@ -52,11 +50,18 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/dashboard/summary', [DashboardController::class, 'dashboardSummary']);
         Route::get('/dashboard/recent-activity', [DashboardController::class, 'dashboardRecentActivity']);
         Route::get('/dashboard/upcomming-deadlines', [DashboardController::class, 'dashboardUpcomingDeadlines']);
+
+        // user profile
+       Route::get('/users/{user}', [ProfileController::class, 'show']); // Add this route for GET
+        Route::patch('/users/{user}', [ProfileController::class, 'updateProfile']); // Add this route for PATCH
+        Route::post('/users/{user}/avatar', [ProfileController::class, 'updateAvatar']); // Changed from patch to post
+        Route::post('/users/{user}/cover-photo', [ProfileController::class, 'updateCoverPhoto']); // Changed from patch to post
+        Route::patch('/users/{user}/bio', [ProfileController::class, 'updateBio']);
     });
 
     //notification
     Route::post('/invitations', [InvitationController::class, 'store']);
-   
+
 
     // Sprints api 
     Route::get('/sprints', [SprintsController::class, 'index']);
