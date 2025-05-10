@@ -28,6 +28,28 @@ class AuthController extends Controller
         $this->userController = $userController;
     }
 
+    private function getCookieConfig()
+    {
+        // Get the frontend URL from environment
+        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+
+        // Parse the URL to extract the domain
+        $urlParts = parse_url($frontendUrl);
+        $domain = isset($urlParts['host']) ? $urlParts['host'] : 'localhost';
+
+        // For localhost, don't specify domain as it can cause issues
+        if ($domain === 'localhost') {
+            $domain = '';
+        }
+
+        return [
+            'domain' => $domain,
+            'secure' => $urlParts['scheme'] === 'https',
+            'sameSite' => $urlParts['scheme'] === 'https' ? 'None' : 'Lax',
+            'httpOnly' => false,
+        ];
+    }
+
     public function register(RegisterRequest $request)
     {
         $user = $this->userController->store($request);
@@ -44,47 +66,40 @@ class AuthController extends Controller
 
         $user->save();
 
-        // Define cookie domain based on environment
-        $cookieDomain = config('app.env') === 'production'
-            ? 'pm-project-management-frontend-dbuw.vercel.app'  // Replace with your actual production domain
-            : 'localhost';
-
-        // Define cookie secure setting based on environment
-        $isSecure = config('app.env') === 'production';
-
-        // Define sameSite attribute based on environment
-        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+        $cookieConfig = $this->getCookieConfig();
 
         return response()->json([
-            'suceess' => true,
+            'success' => true,
             'user' => $user,
             'message' => 'Registration successful. Please check your email to verify your account.',
+            'access_token' => $accessToken, // Also include tokens in the response body
+            'refresh_token' => $refreshToken,
+            'token_type' => 'Bearer',
         ], 200)
-
             ->withCookie(
                 Cookie::make(
                     'access_token',
                     $accessToken,
-                    60,
+                    60, // 60 minutes
                     '/',
-                    $cookieDomain,
-                    $isSecure,
-                    false ,
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
                     false,
-                    $sameSite
+                    $cookieConfig['sameSite']
                 )
             )
             ->withCookie(
                 Cookie::make(
                     'refresh_token',
                     $refreshToken,
-                    60 * 24 * 30,
+                    60 * 24 * 30, // 30 days
                     '/',
-                    $cookieDomain,
-                    $isSecure,
-                    false ,
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
                     false,
-                    $sameSite
+                    $cookieConfig['sameSite']
                 )
             );
     }
@@ -93,56 +108,40 @@ class AuthController extends Controller
     {
         $credentials = $request->only('email', 'password');
 
-        // this function try to create the token when user login and if the credentail not valide pop up 401 server error than pop up 500
         try {
             if (!$accessToken = JWTAuth::attempt($credentials, ['exp' => now()->addDays(1)->timestamp])) {
-                return response()->json(['message' => 'Invalide credentials'], 401);
+                return response()->json(['message' => 'Invalid credentials'], 401);
             }
         } catch (JWTException $e) {
             return response()->json(['message' => 'Could not create token'], 500);
         }
 
-        // check who it login 
         $user = JWTAuth::user();
-
         $refreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
         $user->save();
 
-        // Define cookie domain based on environment
-        $cookieDomain = config('app.env') === 'production'
-            ? '.yourdomain.com'  // Replace with your actual production domain
-            : 'localhost';
-
-        // Define cookie secure setting based on environment
-        $isSecure = config('app.env') === 'production';
-
-        // Define sameSite attribute based on environment
-        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+        $cookieConfig = $this->getCookieConfig();
 
         return response()->json([
             'user' => [
                 'id' => $user->id,
                 'username' => $user->username,
                 'email' => $user->email,
-                'verified' => true
+                'verified' => !is_null($user->email_verified_at),
             ],
-            // 'access_token' => $accessToken,
-            // 'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
         ])
-
-
             ->withCookie(
                 Cookie::make(
                     'access_token',
                     $accessToken,
                     60,
                     '/',
-                    $cookieDomain,
-                    $isSecure,
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
                     false,
-                    false,
-                    $sameSite
+                    $cookieConfig['sameSite']
                 )
             )
             ->withCookie(
@@ -151,11 +150,11 @@ class AuthController extends Controller
                     $refreshToken,
                     60 * 24 * 30,
                     '/',
-                    $cookieDomain,
-                    $isSecure,
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
                     false,
-                    false,
-                    $sameSite
+                    $cookieConfig['sameSite']
                 )
             );
     }
@@ -164,6 +163,11 @@ class AuthController extends Controller
     {
         try {
             $refreshToken = $request->cookie('refresh_token');
+
+            // If cookie is not available, try to get from header
+            if (!$refreshToken && $request->bearerToken()) {
+                $refreshToken = $request->bearerToken();
+            }
 
             if (!$refreshToken) {
                 return response()->json(['message' => 'Refresh token not found'], 401);
@@ -178,16 +182,7 @@ class AuthController extends Controller
             $newAccessToken = JWTAuth::fromUser($user, ['exp' => now()->addDay()->timestamp]);
             $newRefreshToken = JWTAuth::fromUser($user, ['exp' => now()->addDays(30)->timestamp, 'type' => 'refresh']);
 
-            // Define cookie domain based on environment
-            $cookieDomain = config('app.env') === 'production'
-                ? 'pm-project-management-frontend-dbuw.vercel.app'  // Replace with your actual production domain
-                : 'localhost';
-
-            // Define cookie secure setting based on environment
-            $isSecure = config('app.env') === 'production';
-
-            // Define sameSite attribute based on environment
-            $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+            $cookieConfig = $this->getCookieConfig();
 
             return response()->json([
                 'success' => true,
@@ -200,11 +195,11 @@ class AuthController extends Controller
                         $newAccessToken,
                         60,
                         '/',
-                        $cookieDomain,
-                        $isSecure,
-                        false ,
+                        $cookieConfig['domain'],
+                        $cookieConfig['secure'],
+                        $cookieConfig['httpOnly'],
                         false,
-                        $sameSite
+                        $cookieConfig['sameSite']
                     )
                 )
                 ->withCookie(
@@ -213,11 +208,11 @@ class AuthController extends Controller
                         $newRefreshToken,
                         60 * 24 * 30,
                         '/',
-                        $cookieDomain,
-                        $isSecure,
-                        false ,
+                        $cookieConfig['domain'],
+                        $cookieConfig['secure'],
+                        $cookieConfig['httpOnly'],
                         false,
-                        $sameSite
+                        $cookieConfig['sameSite']
                     )
                 );
 
@@ -296,16 +291,8 @@ class AuthController extends Controller
         $user->remember_token = $refreshToken;
         $user->save();
 
-        // Define cookie domain based on environment
-        $cookieDomain = config('app.env') === 'production'
-            ? 'pm-project-management-frontend-dbuw.vercel.app/'  // Replace with your actual production domain
-            : 'localhost';
+        $cookieConfig = $this->getCookieConfig();
 
-        // Define cookie secure setting based on environment
-        $isSecure = config('app.env') === 'production';
-
-        // Define sameSite attribute based on environment
-        $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
 
         return response()->json([
             'user' => [
@@ -313,8 +300,6 @@ class AuthController extends Controller
                 'username' => $user->username,
                 'email' => $user->email,
             ],
-            // 'access_token' => $accessToken,
-            // 'refresh_token' => $refreshToken,
             'message' => 'Password reset successfully'
         ], 200)
 
@@ -324,11 +309,11 @@ class AuthController extends Controller
                     $accessToken,
                     60,
                     '/',
-                    $cookieDomain,
-                    $isSecure,
-                    false ,
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
                     false,
-                    $sameSite
+                    $cookieConfig['sameSite']
                 )
             )
             ->withCookie(
@@ -337,11 +322,11 @@ class AuthController extends Controller
                     $refreshToken,
                     60 * 24 * 30,
                     '/',
-                    $cookieDomain,
-                    $isSecure,
-                    false ,
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
                     false,
-                    $sameSite
+                    $cookieConfig['sameSite']
                 )
             );
     }
@@ -382,46 +367,37 @@ class AuthController extends Controller
             // Save refresh token if needed
             $user->save();
 
-            // Define cookie domain based on environment
-            $cookieDomain = config('app.env') === 'production'
-                ? 'pm-project-management-frontend-dbuw.vercel.app'  // Replace with your actual production domain
-                : 'localhost';
-
-            // Define cookie secure setting based on environment
-            $isSecure = config('app.env') === 'production';
-
-            // Define sameSite attribute based on environment
-            $sameSite = config('app.env') === 'production' ? 'None' : 'Lax';
+            $cookieConfig = $this->getCookieConfig();
 
 
             // Return same response format as other auth methods
             return redirect()->away('http://localhost:3000/profile')
-                ->withCookie(
-                    Cookie::make(
-                        'access_token',
-                        $accessToken,
-                        60,
-                        '/',
-                        $cookieDomain,
-                        $isSecure,
-                        false ,
-                        false,
-                        $sameSite
-                    )
+            ->withCookie(
+                Cookie::make(
+                    'access_token',
+                    $accessToken,
+                    60,
+                    '/',
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
+                    false,
+                    $cookieConfig['sameSite']
                 )
-                ->withCookie(
-                    Cookie::make(
-                        'refresh_token',
-                        $refreshToken,
-                        60 * 24 * 30,
-                        '/',
-                        $cookieDomain,
-                        $isSecure,
-                        false ,
-                        false,
-                        $sameSite
-                    )
-                );
+            )
+            ->withCookie(
+                Cookie::make(
+                    'refresh_token',
+                    $refreshToken,
+                    60 * 24 * 30,
+                    '/',
+                    $cookieConfig['domain'],
+                    $cookieConfig['secure'],
+                    $cookieConfig['httpOnly'],
+                    false,
+                    $cookieConfig['sameSite']
+                )
+            );
         } catch (\Exception $e) {
             Log::error('Social login error', [
                 'provider' => $provider,
