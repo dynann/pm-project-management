@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
+
 
 return new class extends Migration {
     /**
@@ -17,10 +19,15 @@ return new class extends Migration {
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('profileURL')->nullable();
+            $table->string('avatar')->nullable(); // New field
+            $table->string('cover_photo')->nullable(); // New field
+            $table->string('bio')->nullable(); // New field
+            $table->string('phone')->nullable(); // New field
             $table->string('gender')->nullable();
             $table->enum('systemRole', ['user', 'admin'])->default('user');
             $table->rememberToken()->nullable();
             $table->timestamps();
+            $table->text('email_verification_token')->nullable()->after('email_verified_at');
         });
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
@@ -68,6 +75,15 @@ return new class extends Migration {
             $table->foreignId('issueID')->constrained('issues');
             $table->timestamps();
         });
+        Schema::create('mentions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('mentioning_user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('mentioned_user_id')->constrained('users')->onDelete('cascade');
+            $table->text('message');
+            $table->boolean('read')->default(false);
+            $table->timestamps();
+        });
 
     }
 
@@ -76,11 +92,13 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('projects');
-        Schema::dropIfExists('sprints');
-        Schema::dropIfExists('statuses');
-        Schema::dropIfExists('issues');
+        Schema::dropIfExists('mentions');
         Schema::dropIfExists('comments');
+        Schema::dropIfExists('issues');
+        Schema::dropIfExists('statuses');
+        Schema::dropIfExists('sprints');
+        Schema::dropIfExists('projects');
+        Schema::dropIfExists('users');
     }
+
 };
