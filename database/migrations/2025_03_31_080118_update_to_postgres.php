@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
+
 
 return new class extends Migration {
     /**
@@ -25,6 +27,7 @@ return new class extends Migration {
             $table->enum('systemRole', ['user', 'admin'])->default('user');
             $table->rememberToken()->nullable();
             $table->timestamps();
+            $table->text('email_verification_token')->nullable()->after('email_verified_at');
         });
         Schema::create('projects', function (Blueprint $table) {
             $table->id();

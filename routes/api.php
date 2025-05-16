@@ -10,6 +10,10 @@ use App\Http\Controllers\SprintsController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StatusController;
+use App\Http\Controllers\IssueController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\SearchController;
 
 // Auth Routes
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -44,11 +48,11 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/auth/user', [AuthController::class, 'getUserInfo']);
 
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':admin,user')->group(function () {
-        Route::get('/projects', [ProjectsController::class, 'index']);
-        Route::post('/projects', [ProjectsController::class, 'store']);
-        Route::get('/projects/{id}', [ProjectsController::class, 'show']);
-        Route::put('/projects/{id}', [ProjectsController::class, 'update']);
-        Route::delete('/projects/{id}', [ProjectsController::class, 'destroy']);
+        // Route::get('/projects', [ProjectsController::class, 'index']);
+        // Route::post('/projects', [ProjectsController::class, 'store']);
+        // Route::get('/projects/{id}', [ProjectsController::class, 'show']);
+        // Route::put('/projects/{id}', [ProjectsController::class, 'update']);
+        // Route::delete('/projects/{id}', [ProjectsController::class, 'destroy']);
 
         // Project relationships
         Route::get('/projects/{id}/issues', [ProjectsController::class, 'getProjectIssues']);
