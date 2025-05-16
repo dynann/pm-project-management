@@ -15,18 +15,18 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
 
-        User::create([
-            'username' => 'Admin168',
-            'email' => 'admin@gmail.com',
-            'systemRole' => 'admin',
-            'password' => bcrypt('password'),
-        ]);
-        // Create test users
-        User::create([
-            'username' => 'User168',
-            'email' => 'user@gmail.com',
-            'systemRole' => 'user',
-            'password' => bcrypt('password')
-        ]);
+        // User::create([
+        //     'username' => 'Admin168',
+        //     'email' => 'admin@gmail.com',
+        //     'systemRole' => 'admin',
+        //     'password' => bcrypt('password'),
+        // ]);
+        // // Create test users
+        // User::create([
+        //     'username' => 'User168',
+        //     'email' => 'user@gmail.com',
+        //     'systemRole' => 'user',
+        //     'password' => bcrypt('password')
+        // ]);
     }
 }

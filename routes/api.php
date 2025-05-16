@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\PusherController;
 use App\Http\Controllers\MentionController;
 use App\Http\Controllers\UserController;
@@ -75,7 +76,11 @@ Route::middleware('auth:api')->group(function () {
         Route::patch('/users/{user}/bio', [ProfileController::class, 'updateBio']);
     });
 
- 
+    // file attachment
+    Route::post('/issues/{issue}/attachments', [AttachmentController::class, 'store']);
+    Route::get('/attachments/{attachment}', [AttachmentController::class, 'show'])
+        ->name('attachments.show');
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
 
 
     // Sprints api 
@@ -89,6 +94,6 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/sprints/{id}/issues/{issueId}', [SprintsController::class, 'removeIssue']);
 });
 
-   //notification
-    Route::post('/invitations', [InvitationController::class, 'store']);
-    Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
+//notification
+Route::post('/invitations', [InvitationController::class, 'store']);
+Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
