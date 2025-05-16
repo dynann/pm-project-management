@@ -75,20 +75,14 @@ return new class extends Migration {
             $table->foreignId('issueID')->constrained('issues');
             $table->timestamps();
         });
-        Schema::create('members', function (Blueprint $table) {
+        Schema::create('mentions', function (Blueprint $table) {
             $table->id();
-            $table->enum('role', ['admin', 'owner', 'developer'])->default('developer');
-            $table->foreignId('userID')->constrained('users');
-            $table->foreignId('projectID')->constrained('projects');
+            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('mentioning_user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('mentioned_user_id')->constrained('users')->onDelete('cascade');
+            $table->text('message');
+            $table->boolean('read')->default(false);
             $table->timestamps();
-        });
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
         });
 
     }
@@ -98,13 +92,13 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('projects');
-        Schema::dropIfExists('sprints');
-        Schema::dropIfExists('statuses');
-        Schema::dropIfExists('issues');
+        Schema::dropIfExists('mentions');
         Schema::dropIfExists('comments');
-        Schema::dropIfExists('members');
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('issues');
+        Schema::dropIfExists('statuses');
+        Schema::dropIfExists('sprints');
+        Schema::dropIfExists('projects');
+        Schema::dropIfExists('users');
     }
+
 };
