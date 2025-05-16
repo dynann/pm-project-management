@@ -72,6 +72,15 @@ return new class extends Migration {
             $table->foreignId('issueID')->constrained('issues');
             $table->timestamps();
         });
+        Schema::create('mentions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('mentioning_user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('mentioned_user_id')->constrained('users')->onDelete('cascade');
+            $table->text('message');
+            $table->boolean('read')->default(false);
+            $table->timestamps();
+        });
 
     }
 
@@ -80,11 +89,13 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('projects');
-        Schema::dropIfExists('sprints');
-        Schema::dropIfExists('statuses');
-        Schema::dropIfExists('issues');
+        Schema::dropIfExists('mentions');
         Schema::dropIfExists('comments');
+        Schema::dropIfExists('issues');
+        Schema::dropIfExists('statuses');
+        Schema::dropIfExists('sprints');
+        Schema::dropIfExists('projects');
+        Schema::dropIfExists('users');
     }
+
 };

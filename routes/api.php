@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\PusherController;
+use App\Http\Controllers\MentionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
@@ -24,7 +26,16 @@ Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirectToProvi
 Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
 
 
-Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
+
+// pusher mension api websucket
+// User routes for mentions
+Route::get('/projects/{projectId}/users-for-mention', [UserController::class, 'getUsersForMention']);
+Route::get('/projects/{projectId}/invited-users', [UserController::class, 'getInvitedUsers']);
+
+// Mention routes
+Route::post('/mentions', [MentionController::class, 'store']);
+Route::patch('/mentions/{mention}/read', [MentionController::class, 'markAsRead']);
+Route::get('/mentions/unread', [MentionController::class, 'getUnreadMentions']);
 
 
 // Protected Routes (require authentication)
@@ -45,6 +56,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/projects/{id}/members', [ProjectsController::class, 'getProjectMembers']);
         Route::post('/projects/{id}/members', [ProjectsController::class, 'addProjectMember']);
         Route::delete('/projects/{id}/members/{userId}', [ProjectsController::class, 'removeProjectMember']);
+        Route::get('/user/projects', [ProjectsController::class, 'getUserProjects']);
 
         // api dashboard
         Route::get('/dashboard/summary', [DashboardController::class, 'dashboardSummary']);
@@ -52,16 +64,14 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/dashboard/upcomming-deadlines', [DashboardController::class, 'dashboardUpcomingDeadlines']);
 
         // user profile
-       Route::get('/users/{user}', [ProfileController::class, 'show']); // Add this route for GET
+        Route::get('/users/{user}', [ProfileController::class, 'show']); // Add this route for GET
         Route::patch('/users/{user}', [ProfileController::class, 'updateProfile']); // Add this route for PATCH
         Route::post('/users/{user}/avatar', [ProfileController::class, 'updateAvatar']); // Changed from patch to post
         Route::post('/users/{user}/cover-photo', [ProfileController::class, 'updateCoverPhoto']); // Changed from patch to post
         Route::patch('/users/{user}/bio', [ProfileController::class, 'updateBio']);
-Route::get('/user/projects', [ProjectsController::class, 'getUserProjects'])->middleware('auth:api');
     });
 
-    //notification
-    Route::post('/invitations', [InvitationController::class, 'store']);
+ 
 
 
     // Sprints api 
@@ -75,3 +85,6 @@ Route::get('/user/projects', [ProjectsController::class, 'getUserProjects'])->mi
     Route::delete('/sprints/{id}/issues/{issueId}', [SprintsController::class, 'removeIssue']);
 });
 
+   //notification
+    Route::post('/invitations', [InvitationController::class, 'store']);
+    Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
