@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\PusherController;
 use App\Http\Controllers\MentionController;
 use App\Http\Controllers\UserController;
@@ -48,11 +49,11 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/auth/user', [AuthController::class, 'getUserInfo']);
 
     Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':admin,user')->group(function () {
-        // Route::get('/projects', [ProjectsController::class, 'index']);
-        // Route::post('/projects', [ProjectsController::class, 'store']);
-        // Route::get('/projects/{id}', [ProjectsController::class, 'show']);
-        // Route::put('/projects/{id}', [ProjectsController::class, 'update']);
-        // Route::delete('/projects/{id}', [ProjectsController::class, 'destroy']);
+        Route::get('/projects', [ProjectsController::class, 'index']);
+        Route::post('/projects', [ProjectsController::class, 'store']);
+        Route::get('/projects/{id}', [ProjectsController::class, 'show']);
+        Route::put('/projects/{id}', [ProjectsController::class, 'update']);
+        Route::delete('/projects/{id}', [ProjectsController::class, 'destroy']);
 
         // Project relationships
         Route::get('/projects/{id}/issues', [ProjectsController::class, 'getProjectIssues']);
@@ -75,8 +76,11 @@ Route::middleware('auth:api')->group(function () {
         Route::patch('/users/{user}/bio', [ProfileController::class, 'updateBio']);
     });
 
- 
-
+    // file attachment
+    Route::post('/issues/{issue}/attachments', [AttachmentController::class, 'store']);
+    Route::get('/attachments/{attachment}', [AttachmentController::class, 'show'])
+        ->name('attachments.show');
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
 
     // Sprints api 
     Route::get('/sprints', [SprintsController::class, 'index']);
@@ -89,6 +93,9 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/sprints/{id}/issues/{issueId}', [SprintsController::class, 'removeIssue']);
 });
 
+//notification
+Route::post('/invitations', [InvitationController::class, 'store']);
+Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
    //notification
-    Route::post('/invitations', [InvitationController::class, 'store']);
-    Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
+Route::post('/invitations', [InvitationController::class, 'store']);
+Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
