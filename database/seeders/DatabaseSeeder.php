@@ -1,7 +1,9 @@
 <?php
 
 namespace Database\Seeders;
-
+use App\Models\User;
+use App\Models\Project;
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -12,6 +14,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
+
         // Clear existing data - PostgreSQL version
         DB::table('attachments')->delete();
         DB::table('mentions')->delete();
@@ -405,5 +408,18 @@ class DatabaseSeeder extends Seeder
         ];
 
         DB::table('attachments')->insert($attachments);
+        User::create([
+            'username' => 'Admin168',
+            'email' => 'admin@gmail.com',
+            'systemRole' => 'admin',
+            'password' => bcrypt('password'),
+        ]);
+        // Create test users
+        User::create([
+            'username' => 'User168',
+            'email' => 'user@gmail.com',
+            'systemRole' => 'user',
+            'password' => bcrypt('password')
+        ]);
     }
 }

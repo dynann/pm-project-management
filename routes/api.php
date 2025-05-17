@@ -82,7 +82,6 @@ Route::middleware('auth:api')->group(function () {
         ->name('attachments.show');
     Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
 
-
     // Sprints api 
     Route::get('/sprints', [SprintsController::class, 'index']);
     Route::post('/sprints', [SprintsController::class, 'store']);
@@ -95,5 +94,8 @@ Route::middleware('auth:api')->group(function () {
 });
 
 //notification
+Route::post('/invitations', [InvitationController::class, 'store']);
+Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
+   //notification
 Route::post('/invitations', [InvitationController::class, 'store']);
 Route::get('/invitations/verify/{token}', [InvitationController::class, 'verify']);
