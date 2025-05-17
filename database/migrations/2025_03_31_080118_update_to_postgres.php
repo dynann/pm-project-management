@@ -84,7 +84,16 @@ return new class extends Migration {
             $table->boolean('read')->default(false);
             $table->timestamps();
         });
-
+        Schema::create('attachments', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('path');
+            $table->string('mime_type');
+            $table->unsignedBigInteger('size');
+            $table->foreignId('issue_id')->constrained('issues')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->comment('User who uploaded the file');
+            $table->timestamps();
+        });
     }
 
     /**
@@ -92,6 +101,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::dropIfExists('attachments');
         Schema::dropIfExists('mentions');
         Schema::dropIfExists('comments');
         Schema::dropIfExists('issues');
