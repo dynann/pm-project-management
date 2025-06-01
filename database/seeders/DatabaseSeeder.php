@@ -211,8 +211,8 @@ class DatabaseSeeder extends Seeder
                 'sprintID' => 1,
                 'projectID' => 1,
                 'userID' => 1,
-                'assigneeID' => 2,
-                'assignerID' => 1,
+                'assigneeID' => 2,  // Keep original field name
+                'assignerID' => 1,  // Keep original field name
                 'priority' => 'high',
                 'created_at' => now(),
                 'updated_at' => now()
