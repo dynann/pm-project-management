@@ -7,6 +7,7 @@ use App\Models\Mention;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\Invitation;
+use App\Notifications\UserMentionedNotification;
 use Illuminate\Http\Request;
 
 class MentionController extends Controller
@@ -54,6 +55,9 @@ class MentionController extends Controller
         // Load relationships
         $mention->load('mentioningUser', 'project');
 
+        // notfitication after user mentioned
+        $mentionedUser->notify(new UserMentionedNotification($mention));
+
         // Broadcast the mention event
         event(new PusherBroadcast($mention));
 
@@ -91,7 +95,7 @@ class MentionController extends Controller
     {
         $unreadMentions = Mention::where('mentioned_user_id', auth()->id())
             ->where('read', false)
-            ->with(['mentioningUser:id', 'project:id'])
+            ->with(['mentioningUser:id,email', 'project:id'])
             ->orderBy('created_at', 'desc')
             ->get();
 
