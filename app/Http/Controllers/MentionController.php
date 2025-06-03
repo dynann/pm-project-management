@@ -107,7 +107,7 @@ class MentionController extends Controller
     public function getAllMentions()
     {
         $mentions = Mention::where('mentioned_user_id', auth()->id())
-            ->with(['mentioningUser:id', 'project:id'])
+            ->with(['mentioningUser:id,email', 'project:id'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
