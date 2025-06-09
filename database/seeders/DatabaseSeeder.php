@@ -68,6 +68,22 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now()
             ],
             [
+                'username' => 'rthjr',
+                'email' => 'sovannarithphan9@gmail.com',
+                'email_verified_at' => now(),
+                'password' => Hash::make('Password168'),
+                'profileURL' => 'https://example.com/profiles/john',
+                'avatar' => 'avatars/john.jpg',
+                'cover_photo' => 'covers/john.jpg',
+                'bio' => 'Project Manager',
+                'phone' => '9876543210',
+                'gender' => 'male',
+                'systemRole' => 'user',
+                'remember_token' => Str::random(10),
+                'created_at' => now(),
+                'updated_at' => now()
+            ],
+            [
                 'username' => 'janedoe',
                 'email' => 'jane@example.com',
                 'email_verified_at' => now(),
@@ -124,7 +140,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'E-commerce Platform',
                 'key' => 'ECOM',
-                'accessibility' => 'private',
+                'accessibility' => 'public',
                 'ownerID' => 1,
                 'teamID' => 1,
                 'created_at' => now(),
@@ -142,7 +158,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Website Redesign',
                 'key' => 'WEB',
-                'accessibility' => 'private',
+                'accessibility' => 'public',
                 'ownerID' => 3,
                 'teamID' => 2,
                 'created_at' => now(),
@@ -160,7 +176,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Data Analytics Dashboard',
                 'key' => 'DASH',
-                'accessibility' => 'private',
+                'accessibility' => 'public',
                 'ownerID' => 5,
                 'teamID' => 2,
                 'created_at' => now(),
