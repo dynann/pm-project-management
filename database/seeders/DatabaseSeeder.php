@@ -68,22 +68,6 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now()
             ],
             [
-                'username' => 'rthjr',
-                'email' => 'sovannarithphan9@gmail.com',
-                'email_verified_at' => now(),
-                'password' => Hash::make('Password168'),
-                'profileURL' => 'https://example.com/profiles/john',
-                'avatar' => 'avatars/john.jpg',
-                'cover_photo' => 'covers/john.jpg',
-                'bio' => 'Project Manager',
-                'phone' => '9876543210',
-                'gender' => 'male',
-                'systemRole' => 'user',
-                'remember_token' => Str::random(10),
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
                 'username' => 'janedoe',
                 'email' => 'jane@example.com',
                 'email_verified_at' => now(),
