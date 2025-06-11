@@ -8,11 +8,10 @@ use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class IssueController extends Controller
 {
-   
-
     protected array $updateRules = [
         'title' => 'sometimes|string|max:255',
         'description' => 'sometimes|string',
@@ -25,7 +24,6 @@ class IssueController extends Controller
         'priority' => 'sometimes|in:low,medium,high,critical',
     ];
 
-    // Relationships to eager load
     protected array $withRelations = [
         'status',
         'sprint',
@@ -36,18 +34,12 @@ class IssueController extends Controller
         'attachments'
     ];
 
-    /**
-     * Get all issues
-     */
     public function index(): JsonResponse
     {
         $issues = Issue::with($this->withRelations)->get();
         return response()->json($issues);
     }
 
-    /**
-     * Create a new issue
-     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->only([
@@ -71,33 +63,54 @@ class IssueController extends Controller
     
         return response()->json($issue->load($this->withRelations), 201);
     }
-    
 
-    /**
-     * Get specific issue
-     */
     public function show(Issue $issue): JsonResponse
     {
         return response()->json($issue->load($this->withRelations));
     }
 
-    /**
-     * Update an issue
-     */
-    public function update(Request $request, Issue $issue): JsonResponse
-    {
-        $validated = $request->validate($this->updateRules);
-
-        DB::transaction(function () use ($issue, $validated) {
-            $issue->update($validated);
-        });
-
-        return response()->json($issue->load($this->withRelations));
+   public function update(Request $request, Issue $issue): JsonResponse
+{
+    // Validate request data
+    $validator = Validator::make($request->all(), $this->updateRules);
+    
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
     }
 
-    /**
-     * Delete an issue
-     */
+    try {
+        DB::transaction(function () use ($issue, $request) {
+            $issue->update($request->only([
+                'title',
+                'description',
+                'startDate',
+                'endDate',
+                'duration',
+                'statusID',
+                'sprintID',
+                'projectID',
+                'priority',
+                'assigneeID',
+                'assignerID'
+            ]));
+        });
+
+        return response()->json([
+            'message' => 'Issue updated successfully',
+            'data' => $issue->load($this->withRelations)
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to update issue',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
     public function destroy(Issue $issue): JsonResponse
     {
         DB::transaction(function () use ($issue) {
@@ -107,9 +120,6 @@ class IssueController extends Controller
         return response()->json(null, 204);
     }
 
-    /**
-     * Assign issue to user
-     */
     public function assign(Issue $issue, int $userId): JsonResponse
     {
         $user = User::findOrFail($userId);
@@ -124,9 +134,6 @@ class IssueController extends Controller
         return response()->json($issue->load('assignee'));
     }
 
-    /**
-     * Update issue status
-     */
     public function updateStatus(Issue $issue, int $statusId): JsonResponse
     {
         $status = Status::findOrFail($statusId);
@@ -138,18 +145,12 @@ class IssueController extends Controller
         return response()->json($issue->load('status'));
     }
 
-    /**
-     * Get issue comments
-     */
     public function comments(Issue $issue): JsonResponse
     {
         $comments = $issue->comments()->with('user')->get();
         return response()->json($comments);
     }
 
-    /**
-     * Get issues by project ID
-     */
     public function getByProject(int $projectId): JsonResponse
     {
         $issues = Issue::with($this->withRelations)

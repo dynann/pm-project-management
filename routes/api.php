@@ -138,6 +138,10 @@ Route::apiResource('statuses', StatusController::class);
 
 // issue
 Route::apiResource('issues', IssueController::class);
+
+// Additional custom routes if needed
+Route::put('/issues/{issue}/assign/{userId}', [IssueController::class, 'assign']);
+Route::put('/issues/{issue}/status/{statusId}', [IssueController::class, 'updateStatus']);
 Route::get('/projects/{projectId}/issues', [IssueController::class, 'getByProject']);
 
 
