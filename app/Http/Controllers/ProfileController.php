@@ -18,7 +18,7 @@ class ProfileController extends Controller
         return response()->json([
             'user' => [
                 'id' => $user->id,
-                'name' => $user->name,
+                'username' => $user->username,
                 'email' => $user->email,
                 'bio' => $user->bio,
                 'avatar' => $user->avatar ? Storage::url($user->avatar) : null,
