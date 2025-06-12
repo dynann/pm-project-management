@@ -54,7 +54,7 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $user->update($request->only(['name', 'email']));
+        $user->update($request->only(['username', 'email']));
         return response()->json($user);
     }
 
@@ -87,7 +87,7 @@ class UserController extends Controller
             ->map(function ($invitation) {
                 return [
                     'id' => $invitation->user_id, // or use a different identifier
-                    'name' => $invitation->username,
+                    'username' => $invitation->username,
                     'email' => $invitation->email
                 ];
             });
