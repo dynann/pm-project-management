@@ -164,4 +164,231 @@ class DashboardController extends Controller
         ], 200);
     }
 
+    public function adminGetAllUsers()
+    {
+        $users = User::with(['projects', 'assignedIssues'])
+            ->withCount(['projects', 'assignedIssues'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'message' => 'successfully',
+            'success' => true,
+            'data' => $users,
+            'total_count' => $users->count()
+        ], 200);
+    }
+
+    public function adminGetAllProjects()
+    {
+        $projects = Project::with(['owner', 'issues', 'sprints'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'message' => 'projects fetched successfully',
+            'success' => true,
+            'data' => $projects,
+            'total_count' => $projects->count()
+        ], 200);
+    }
+
+    public function adminGetAllIssues()
+    {
+        $issues = Issue::with(['project', 'status', 'assignee', 'sprint'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'message' => 'successfully',
+            'success' => true,
+            'data' => $issues,
+            'total_count' => $issues->count()
+        ], 200);
+    }
+
+    public function adminGetAllSprints()
+    {
+
+        $sprints = Sprint::with(['owner', 'issues'])
+            ->withCount('issues')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'message' => 'Sprints fetched successfully',
+            'success' => true,
+            'data' => $sprints,
+            'total_count' => $sprints->count()
+        ], 200);
+    }
+
+    /**
+     * Get system activity logs for admin
+     */
+    public function adminSystemActivity()
+    {
+
+        $recentProjects = Project::with('owner')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get(['id', 'name', 'ownerID', 'created_at']);
+
+        $recentIssues = Issue::with(['project', 'assignee'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get(['id', 'title', 'projectID', 'assigneeID', 'created_at']);
+
+        $recentUsers = User::orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get(['id', 'username', 'email', 'created_at']);
+
+        return response()->json([
+            'message' => 'System activity fetched successfully',
+            'success' => true,
+            'data' => [
+                'recent_projects' => $recentProjects,
+                'recent_issues' => $recentIssues,
+                'recent_users' => $recentUsers
+            ]
+        ], 200);
+    }
+
+    /**
+     * Get user performance metrics for admin
+     */
+    public function adminUserPerformance()
+    {
+
+        $userPerformance = User::with(['projects', 'assignedIssues'])
+            ->withCount([
+                'projects',
+                'assignedIssues',
+                'assignedIssues as completed_issues_count' => function ($query) {
+                    $query->whereHas('status', function ($q) {
+                        $q->whereIn('name', ['Closed', 'Done']);
+                    });
+                },
+                'assignedIssues as overdue_issues_count' => function ($query) {
+                    $query->where('endDate', '<', Carbon::now())
+                        ->whereHas('status', function ($q) {
+                            $q->whereNotIn('name', ['Closed', 'Done']);
+                        });
+                }
+            ])
+            ->get()
+            ->map(function ($user) {
+                $completionRate = $user->assigned_issues_count > 0
+                    ? round(($user->completed_issues_count / $user->assigned_issues_count) * 100, 2)
+                    : 0;
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'projects_count' => $user->projects_count,
+                    'assigned_issues_count' => $user->assigned_issues_count,
+                    'completed_issues_count' => $user->completed_issues_count,
+                    'overdue_issues_count' => $user->overdue_issues_count,
+                    'completion_rate' => $completionRate
+                ];
+            });
+
+        return response()->json([
+            'message' => 'User performance metrics fetched successfully',
+            'success' => true,
+            'data' => $userPerformance
+        ], 200);
+    }
+
+    /**
+     * Get project health overview for admin
+     */
+    public function adminProjectHealth()
+    {
+
+        $projectHealth = Project::with(['owner', 'issues', 'sprints'])
+            ->withCount([
+                'issues',
+                'issues as open_issues_count' => function ($query) {
+                    $query->whereHas('status', function ($q) {
+                        $q->where('name', 'Open');
+                    });
+                },
+                'issues as completed_issues_count' => function ($query) {
+                    $query->whereHas('status', function ($q) {
+                        $q->whereIn('name', ['Closed', 'Done']);
+                    });
+                },
+                'issues as overdue_issues_count' => function ($query) {
+                    $query->where('endDate', '<', Carbon::now())
+                        ->whereHas('status', function ($q) {
+                            $q->whereNotIn('name', ['Closed', 'Done']);
+                        });
+                },
+                'sprints'
+            ])
+            ->get()
+            ->map(function ($project) {
+                $completionRate = $project->issues_count > 0
+                    ? round(($project->completed_issues_count / $project->issues_count) * 100, 2)
+                    : 0;
+
+                $healthScore = $this->calculateProjectHealthScore(
+                    $project->open_issues_count,
+                    $project->completed_issues_count,
+                    $project->overdue_issues_count,
+                    $project->issues_count
+                );
+
+                return [
+                    'id' => $project->id,
+                    'name' => $project->name,
+                    'owner' => $project->owner->username,
+                    'total_issues' => $project->issues_count,
+                    'open_issues' => $project->open_issues_count,
+                    'completed_issues' => $project->completed_issues_count,
+                    'overdue_issues' => $project->overdue_issues_count,
+                    'sprints_count' => $project->sprints_count,
+                    'completion_rate' => $completionRate,
+                    'health_score' => $healthScore,
+                    'health_status' => $this->getHealthStatus($healthScore)
+                ];
+            });
+
+        return response()->json([
+            'message' => 'Project health overview fetched successfully',
+            'success' => true,
+            'data' => $projectHealth
+        ], 200);
+    }
+
+    /**
+     * Calculate project health score
+     */
+    private function calculateProjectHealthScore($openIssues, $completedIssues, $overdueIssues, $totalIssues)
+    {
+        if ($totalIssues == 0)
+            return 100;
+
+        $completionScore = ($completedIssues / $totalIssues) * 40;
+        $overdueScore = max(0, 30 - (($overdueIssues / $totalIssues) * 30));
+        $activeScore = min(30, ($openIssues / $totalIssues) * 30);
+
+        return round($completionScore + $overdueScore + $activeScore, 2);
+    }
+
+    /**
+     * Get health status based on score
+     */
+    private function getHealthStatus($score)
+    {
+        if ($score >= 80)
+            return 'Excellent';
+        if ($score >= 60)
+            return 'Good';
+        if ($score >= 40)
+            return 'Fair';
+        return 'Poor';
+    }
 }
