@@ -73,6 +73,29 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/dashboard/recent-activity', [DashboardController::class, 'dashboardRecentActivity']);
         Route::get('/dashboard/upcomming-deadlines', [DashboardController::class, 'dashboardUpcomingDeadlines']);
 
+        // dashboard for admin
+        Route::middleware(\App\Http\Middleware\RoleMiddleware::class . ':admin,user')->group(function () {
+            Route::get('/admin/users', [DashboardController::class, 'adminGetAllUsers']);
+
+            // Admin Projects Management
+            Route::get('/admin/projects', [DashboardController::class, 'adminGetAllProjects']);
+
+            // Admin Issues Management
+            Route::get('/admin/issues', [DashboardController::class, 'adminGetAllIssues']);
+
+            // Admin Sprints Management
+            Route::get('/admin/sprints', [DashboardController::class, 'adminGetAllSprints']);
+
+            // Admin System Activity
+            Route::get('/admin/system/activity', [DashboardController::class, 'adminSystemActivity']);
+
+            // Admin User Performance
+            Route::get('/admin/users/performance', [DashboardController::class, 'adminUserPerformance']);
+
+            // Admin Project Health
+            Route::get('/admin/projects/health', [DashboardController::class, 'adminProjectHealth']);
+        });
+
         // user profile
         Route::get('/users/{user}', [ProfileController::class, 'show']); // Add this route for GET
         Route::patch('/users/{user}', [ProfileController::class, 'updateProfile']); // Add this route for PATCH
