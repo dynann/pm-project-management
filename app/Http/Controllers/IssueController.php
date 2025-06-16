@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Notifications\AssigneeNotification;
 
 class IssueController extends Controller
 {
@@ -97,6 +98,12 @@ class IssueController extends Controller
                 'assignerID'
             ]));
         });
+        if ($request->assignee_id) {
+        $assignee = User::find($request->assignee_id);
+        if ($assignee) {
+        $assignee->notify(new AssigneeNotification($issue, auth()->user(), true));
+        }
+}
 
         return response()->json([
             'message' => 'Issue updated successfully',
