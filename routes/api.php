@@ -34,7 +34,7 @@ Route::post('/api/reset-password', [AuthController::class, 'resetPassword']);
 // social login
 Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirectToProvider']);
 Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
-
+Route::get('/users/{user}', [ProfileController::class, 'show']); // Add this route for GET
 
 
 
@@ -97,7 +97,7 @@ Route::middleware('auth:api')->group(function () {
         });
 
         // user profile
-        Route::get('/users/{user}', [ProfileController::class, 'show']); // Add this route for GET
+
         Route::patch('/users/{user}', [ProfileController::class, 'updateProfile']); // Add this route for PATCH
         Route::post('/users/{user}/avatar', [ProfileController::class, 'updateAvatar']); // Changed from patch to post
         Route::post('/users/{user}/cover-photo', [ProfileController::class, 'updateCoverPhoto']); // Changed from patch to post

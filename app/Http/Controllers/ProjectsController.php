@@ -186,34 +186,42 @@ class ProjectsController extends Controller
         ], 200);
     }      // GET /api/projects/{id}/sprints
 
-    public function getProjectMembers($projectId)
+      public function getProjectMembers($projectId)
     {
-        // Validate project exists
-        $project = Project::find($projectId);
+        try {
+            // Validate project exists
+            $project = Project::find($projectId);
 
-        if (!$project) {
+            if (!$project) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Project not found'
+                ], 404);
+            }
+
+            // Eager load 'user' relationship
+            $projectMembers = Member::with('user')->where('projectID', $projectId)->get();
+
+            if ($projectMembers->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No members found for this project'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully retrieved project members',
+                'data' => $projectMembers
+            ], 200);
+        } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Project not found'
-            ], 404);
+                'message' => 'An error occurred while retrieving project members.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $projectMembers = Member::where('projectID', $projectId)->get();
-
-        // Optional: check if no members found
-        if ($projectMembers->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No members found for this project'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Successfully retrieved project members',
-            'data' => $projectMembers
-        ], 200);
-    }       // GET /api/projects/{id}/members
+    }             // GET /api/projects/{id}/members
 
     public function addProjectMember(Request $request, $projectId)
     {
