@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Copy custom PHP configuration
+COPY .docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+
 # Set working directory
 WORKDIR /var/www/html
 
