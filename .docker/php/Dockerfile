@@ -13,7 +13,14 @@ RUN apk update && apk add \
 
 RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath zip
 
+
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+=======
+# Copy custom PHP configuration
+COPY .docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+# Set working directory
+WORKDIR /var/www/html
 
 RUN addgroup -g 1000 -S www && \
     adduser -u 1000 -S www -G www
