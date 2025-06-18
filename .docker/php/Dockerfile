@@ -17,7 +17,7 @@ RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath zip
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 =======
 # Copy custom PHP configuration
-COPY .docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+COPY .docker/php/php.ini /usr/local/etc/php/php.ini
 
 # Set working directory
 WORKDIR /var/www/html
