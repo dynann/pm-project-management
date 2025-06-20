@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   app:
     build:
@@ -9,7 +11,7 @@ services:
     volumes:
       - .:/var/www/html
     depends_on:
-      - new_postgres
+      - postgres
     networks:
       - laravel_network
 
@@ -27,23 +29,24 @@ services:
     networks:
       - laravel_network
 
-  new_postgres:
-    image: postgres:17
-    container_name: laravel_new_postgres
+  postgres:
+    build:
+      context: .docker/postgres
+    container_name: laravel_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: my_new_db
-      POSTGRES_USER: new_laravel_user
-      POSTGRES_PASSWORD: my_user
+      POSTGRES_DB: laravel_db
+      POSTGRES_USER: laravel_user
+      POSTGRES_PASSWORD: password
     ports:
-      - "5435:5432"
+      - "5432:5432"
     networks:
       - laravel_network
     volumes:
-      - new_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  new_postgres_data:
+  postgres_data:
 
 networks:
   laravel_network:

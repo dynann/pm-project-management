@@ -1,35 +1,21 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.2-fpm
 
-RUN apk update && apk add \
-    build-base \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    curl \
-    oniguruma-dev \
-    libxml2-dev \
-    postgresql-dev
+# Install required extensions
+RUN apt-get update && apt-get install -y \
+    git unzip curl libpq-dev bash \
+    && docker-php-ext-install pdo pdo_pgsql
 
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath zip
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-=======
-# Copy custom PHP configuration
+# Copy custom php.ini
 COPY .docker/php/php.ini /usr/local/etc/php/php.ini
 
 # Set working directory
 WORKDIR /var/www/html
 
-RUN addgroup -g 1000 -S www && \
-    adduser -u 1000 -S www -G www
-
-WORKDIR /var/www
-
-USER www
-
-COPY --chown=www:www . /var/www
-
+# Expose PHP-FPM port
 EXPOSE 9000
+
+# Start PHP-FPM server
 CMD ["php-fpm"]
