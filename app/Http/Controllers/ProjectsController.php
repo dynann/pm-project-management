@@ -102,26 +102,17 @@ class ProjectsController extends Controller
 
     public function destroy($id)
     {
-        // find the data in database
-        $project = Project::find($id);
+        $project = Project::findOrFail($id);
 
-        // check whether it exist or not
-        if (!$project) {
-            return response()->json([
-                'success' => false,
-                'message' => 'the data does not exist'
-            ], 404);
+        // Only the owner can delete
+        if (auth()->id() !== $project->ownerID) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // delete the data from database
         $project->delete();
 
-        // return the response to frontend 
-        return response()->json([
-            'success' => true,
-            'message' => 'data deleted successfully'
-        ], 200);
-    } // DELETE /api/projects/{id}
+        return response()->json(['message' => 'Project deleted successfully']);
+    }
 
     // Relationship methods
     public function getProjectIssues($projectId)

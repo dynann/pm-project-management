@@ -19,9 +19,9 @@ class ChatController extends Controller
         }
 
         // Check if user has access to the project
-        if (!Auth::user()->projects->contains($project->id)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        // if (!Auth::user()->projects->contains($project->id)) {
+        //     return response()->json(['message' => 'Unauthorized'], 403);
+        // }
 
         return response()->json($issue->chats()->with('user')->get());
     }
@@ -34,9 +34,9 @@ class ChatController extends Controller
         }
 
         // Check if user has access to the project
-        if (!Auth::user()->projects->contains($project->id)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        // if (!Auth::user()->projects->contains($project->id)) {
+        //     return response()->json(['message' => 'Unauthorized'], 403);
+        // }
 
         $request->validate([
             'message' => 'required|string|max:1000',
