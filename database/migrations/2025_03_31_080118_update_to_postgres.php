@@ -61,7 +61,7 @@ return new class extends Migration {
             $table->integer('duration')->nullable();
             $table->foreignId('statusID')->constrained('statuses');
             $table->foreignId('sprintID')->nullable()->constrained('sprints');
-            $table->foreignId('projectID')->constrained('projects');
+            $table->foreignId('projectID')->constrained('projects')->onDelete('cascade');
             $table->foreignId('userID')->constrained('users');
             $table->foreignId('assigneeID')->nullable()->constrained('users');
             $table->foreignId('assignerID')->nullable()->constrained('users');
