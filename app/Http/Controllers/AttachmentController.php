@@ -45,13 +45,15 @@ class AttachmentController extends Controller
             abort(404);
         }
 
-        return response()->file(
-            Storage::disk('public')->path($attachment->path),
-            [
-                'Content-Type' => $attachment->mime_type,
-                'Content-Disposition' => 'inline; filename="' . $attachment->name . '"'
-            ]
-        );
+          // Get the file content
+        $file = Storage::disk('public')->get($attachment->path);
+    
+    // Return the file as a response
+        return response($file, 200, [
+            'Content-Type' => $attachment->mime_type,
+            'Content-Disposition' => 'inline; filename="' . $attachment->name . '"',
+            'Content-Length' => $attachment->size,
+        ]);
     }
 
 
