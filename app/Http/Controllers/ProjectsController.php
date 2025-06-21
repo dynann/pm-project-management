@@ -187,7 +187,7 @@ class ProjectsController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Project not found'
-                ], 404);
+                ], 200);
             }
 
             // Eager load 'user' relationship
@@ -197,7 +197,7 @@ class ProjectsController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'No members found for this project'
-                ], 404);
+                ], 200);
             }
 
             return response()->json([
